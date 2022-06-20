@@ -15,26 +15,31 @@ import psutil
 from ctypes import cast, POINTER
 from comtypes import CLSCTX_ALL
 from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
+import pyprowl
 #config parser initialisation
 config = configparser.ConfigParser()
 config.read("config.ini")
+#global values
+folders=[]
+capps=[]
+donethings=False
+es=sound.sound()
+es.load('s/error.wav')
+pr='bla'
 #pycaw initialisation
 devices = AudioUtilities.GetSpeakers()
 interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
 volume = cast(interface, POINTER(IAudioEndpointVolume))
 vr = volume.GetVolumeRange()
-#global values
-folders=[]
-capps=[]
-donethings=False
 def main():
 #init stuff
 	if __name__ == '__main__':
-		if getopt('system monitor options','idle_closing',type='b')==True or getopt('idle_options','mute_wen_idle',type='b')==True:
+		if getopt('system monitor options','notify_prowl',type='b')==True:
+			set_prowl_key()
+		if getopt('system monitor options','idle_closing',type='b')==True or getopt('idle_options','mute_wen_idle',type='b')==True or getopt('system monitor options','notify_prowl',type='b')==True:
 			idle=Thread(target=idleloop)
-			if getopt('idle_options','mute_wen_idle',type='b')==True:
-				kv=Thread(target=volloop)
-				kv.start()
+			kv=Thread(target=volloop)
+			kv.start()
 			idle.start()
 		fsync=Thread(target=back_folders,args="s")
 		volmon=Thread(target=vmon)
@@ -95,8 +100,13 @@ def getopt(sect,opt,type='s'):
 		elif type=='b':
 			if re.lower() in ['yes','y','on','true']:
 				re=True
-		else:
+		elif re.lower() in ['no','n','off','false']:
 			re=False
+		else:
+			print("error, expression\n",re,"is not of a proper bool value")
+			es.play_waite()
+			es.close()
+			exit
 	else:
 		if type=='s':
 			re=re
@@ -107,12 +117,18 @@ def getopt(sect,opt,type='s'):
 		elif type=='b':
 			if re.lower() in ['yes','y','on','true']:
 				re=True
-		else:
+		elif re.lower() in ['no','n','off','false']:
 			re=False
+		else:
+			print("error, expression\n",re,"is not of a proper bool value")
+			print("error, expression\n",re,"is not of a proper bool value")
+			es.play_waite()
+			es.close()
+			exit
 	return re
 def idleloop():
 #init stuff
-	donethings=False
+	global donethings
 	s=sound.sound()
 	s.load('s/warn.wav')
 	afktime=getopt('idle_options','afk_time',type='i')
@@ -131,9 +147,7 @@ def idleloop():
 				donethings=True
 				if getopt('idle_options','mute_wen_idle',type='b')==True:
 					volume.SetMute(1,None)
-		elif donethings==True:
-			if not lastfidle==fidle:
-				donethings=False
+		continue
 def getapps():
 	config.read("config.ini")
 	capps = config.sections()
@@ -192,12 +206,35 @@ def batrloop():
 			if bat==100 or bat==90 or bat ==80 or bat==70 or bat==60 or bat==50 or bat==40 or bat==30 or bat==20 or bat==10:
 				output.speak(bat+"percent battery remaining",True)
 def volloop():
+	global donethings
 	while True:
 		fidle =win32api.GetLastInputInfo()
 		time.sleep(0.3)
 		lastfidle=fidle
 		fidle =win32api.GetLastInputInfo()
-		if not lastfidle==fidle and getopt('idle_options','mute_wen_idle',type='b')==True:
-			volume.SetMute(0,None)
+		if not lastfidle==fidle and donethings==True:
+			donethings=False
+			if getopt('idle_options','mute_wen_idle',type='b')==True:					volume.SetMute(0,None)
+			if getopt('system monitor options','notify_prowl',type='b')==True:
+				pnot('computer not idle','some one is interacting with your computer')
 			continue
+def set_prowl_key():
+#prowl initialisation
+	global pr
+	pr=pyprowl.Prowl(getopt('prowl options','key',type='s'))
+	try:
+		result =pr.verify_key()
+		print ("Prowl API key successfully verified")
+	except Exception as e:
+		print ("Error verifying Prowl API key:",e)
+		es.play_wait()
+		es.close()
+		exit()
+def pnot(event: str,message: str):
+	try:
+		pr.notify(event,message,priority=getopt('prowl options','priority',type='i'),appName='estarter')
+		print("notification sent to prowl")
+	except Exception as  e:
+		print ("Error sending notification to Prowl:",e)
+		es.play()
 main()
