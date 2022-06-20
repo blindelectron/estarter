@@ -1,6 +1,4 @@
-##a script for starting Ethan's services, doing backups, and generally making him lazier
-#if you have access to this script, and your name is not Ethan Jones, I want to no how you got it , and I want you to delete it right now, unless you have explicit permission from Ethan Jones to have it.
-#if your not Ethan Jones, and you have this script with out his permission, your mean, your not nice, and you suck.
+
 ##imports
 import os
 import time
