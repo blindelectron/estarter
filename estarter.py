@@ -26,18 +26,16 @@ vr = volume.GetVolumeRange()
 #global values
 folders=[]
 capps=[]
-beeped=False
 donethings=False
 def main():
 #init stuff
 	if __name__ == '__main__':
-		if getopt('system monitor options','idle_closing',type='b')==True:
+		if getopt('system monitor options','idle_closing',type='b')==True or getopt('idle_options','mute_wen_idle',type='b')==True:
 			idle=Thread(target=idleloop)
 			if getopt('idle_options','mute_wen_idle',type='b')==True:
 				kv=Thread(target=volloop)
 				kv.start()
 			idle.start()
-
 		fsync=Thread(target=back_folders,args="s")
 		volmon=Thread(target=vmon)
 		fsync.start()
@@ -128,7 +126,8 @@ def idleloop():
 			s.play_wait()
 			time.sleep(warntime)
 			if lastfidle==fidle:
-				closeapps()
+				if getopt('system monitor options','idle_closing',type='b')==True:
+					closeapps()
 				donethings=True
 				if getopt('idle_options','mute_wen_idle',type='b')==True:
 					volume.SetMute(1,None)
