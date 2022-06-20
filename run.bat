@@ -1,0 +1,2 @@
+python estarter.py
+pause
