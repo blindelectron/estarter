@@ -16,6 +16,7 @@ from ctypes import cast, POINTER
 from comtypes import CLSCTX_ALL
 from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 import pyprowl
+from watchpoints import watch
 #config parser initialisation
 config = configparser.ConfigParser()
 config.read("config.ini")
@@ -141,6 +142,7 @@ def idleloop():
 		if lastfidle==fidle and donethings==False:
 			s.play_wait()
 			time.sleep(warntime)
+			fidle=win32api.GetLastInputInfo()
 			if lastfidle==fidle:
 				if getopt('system monitor options','idle_closing',type='b')==True:
 					closeapps()
@@ -177,34 +179,36 @@ def vmon():
 		else:
 			continue
 def batrloop():
+	cs_sound=sound.sound()
+	ss_sound=sound.sound()
+	cs_sound.load("s/charge start.wav")
+	ss_sound.load("s/charge stop.wav")
+	battery=psutil.sensors_battery()
+	chargstat=battery[2]
+	bat=battery[0]
+#calback for watch
+	def cstat(bla1,bla2,bla3):
+		if chargstat==True:
+			output.speak("battery charging started",True)
+			cs_sound.play()
+			if getopt('system monitor options','notify_prowl',type='b')==True:
+				pnot('computer started charging','your computer is now charging')
+		if chargstat==False:
+			output.speak("battery charging stopped",True)
+			ss_sound.play()
+			if getopt('system monitor options','notify_prowl',type='b')==True:
+				pnot('computer stopped charging','your computer is not charging any more')
+	def bstat(bla1,bla2,bla3):
+		if bat==100 or bat==90 or bat ==80 or bat==70 or bat==60 or bat==50 or bat==40 or bat==30 or bat==20 or bat==10:
+
+			output.speak(str(bat)+"percent battery remaining",True)
+	watch(chargstat,callback=cstat)
+	watch(bat,callback=bstat)
 	while True:
 		battery=psutil.sensors_battery()
 		bat=battery[0]
 		chargstat=battery[2]
-		och=chargstat
-		battery=psutil.sensors_battery()
-		chargstat=battery[2]
-		if not och==chargstat:
-			if chargstat==True:
-				output.speak("battery charging started",True)
-				och=chargstat
-				chargstat=battery[2]
-				continue
-			if chargstat==False:
-				output.speak("battery charging stopped",True)
-				och=chargstat
-				chargstat=battery[2]
-				continue
-		else:
-			continue
-		battery=psutil.sensors_battery()
-		bat=battery[0]
-		obat=bat
-		battery=psutil.sensors_battery()
-		bat=battery[0]
-		if not bat==obat:
-			if bat==100 or bat==90 or bat ==80 or bat==70 or bat==60 or bat==50 or bat==40 or bat==30 or bat==20 or bat==10:
-				output.speak(bat+"percent battery remaining",True)
+		continue
 def volloop():
 	global donethings
 	while True:
