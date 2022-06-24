@@ -17,6 +17,9 @@ from comtypes import CLSCTX_ALL
 from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 import pyprowl
 from watchpoints import watch
+import sys
+import pythoncom
+import wmi
 #config parser initialisation
 config = configparser.ConfigParser()
 config.read("config.ini")
@@ -26,7 +29,7 @@ capps=[]
 donethings=False
 es=sound.sound()
 es.load('s/error.wav')
-pr='bla'
+pr=""
 #pycaw initialisation
 devices = AudioUtilities.GetSpeakers()
 interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
@@ -49,6 +52,10 @@ def main():
 	if getopt('system monitor options','battery_announce',type='b')==True:
 		bthread=Thread(target=batrloop)
 		bthread.start()
+	if getopt('system monitor options','usb_monitor',type='b')==True:
+
+		uthread=Thread(target=usbloop)
+		uthread.start()
 def closeapps():
 	capps=getapps()
 	config.read("config.ini")
@@ -241,4 +248,26 @@ def pnot(event: str,message: str):
 	except Exception as  e:
 		print ("Error sending notification to Prowl:",e)
 		es.play()
+def usbloop():
+	pythoncom.CoInitialize()
+	device_connected_wql="SELECT * FROM __InstanceCreationEvent WITHIN 2 WHERE TargetInstance ISA \'Win32_USBHub\'"
+	device_disconnected_wql="SELECT * FROM __InstanceDeletionEvent WITHIN 2 WHERE TargetInstance ISA \'Win32_USBHub\'"
+	c=wmi.WMI ()
+	connected_watcher = c.watch_for(raw_wql=device_connected_wql)
+	disconnected_watcher = c.watch_for(raw_wql=device_disconnected_wql)
+	while 1:
+		try:
+			connected = connected_watcher(timeout_ms=10)
+		except wmi.x_wmi_timed_out:
+			pass
+		else:
+			if connected:
+				pnot("device connected","a device has been connected to your computer")
+		try:
+			disconnected = disconnected_watcher(timeout_ms=10)
+		except wmi.x_wmi_timed_out:
+			pass
+		else:
+			if disconnected:
+				pnot("device disconnected","a device has been disconnected from your computer")
 main()
