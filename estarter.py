@@ -36,7 +36,7 @@ interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
 volume = cast(interface, POINTER(IAudioEndpointVolume))
 vr = volume.GetVolumeRange()
 def main():
-#init stuff
+	#init stuff
 	if __name__ == '__main__':
 		if getopt('system monitor options','notify_prowl',type='b')==True:
 			set_prowl_key()
@@ -53,21 +53,22 @@ def main():
 		bthread=Thread(target=batrloop)
 		bthread.start()
 	if getopt('system monitor options','usb_monitor',type='b')==True:
-
 		uthread=Thread(target=usbloop)
 		uthread.start()
+
 def closeapps():
 	capps=getapps()
 	config.read("config.ini")
 	for procloop in capps:
 		subprocess.Popen("taskkill.exe /im "+getopt("clapp "+procloop,"file"),shell=True,stdout=None)
+
 def back_folders(mode="s"):
 	folders=getfolders()
 	for foldloop in folders:
 		foldera=getopt("folder "+foldloop,"source")
-#		print(foldera)
+		#print(foldera)
 		folderb=getopt("folder "+foldloop,"dest")
-#		print(folderb)
+		#print(folderb)
 		if mode=="s":
 			sp=Thread(target=syncfolder,args=("s",foldera,folderb))
 			sb.start
@@ -80,12 +81,14 @@ def back_folders(mode="s"):
 					continue
 		elif mode=="u":
 			syncfolder("u",foldera,folderb,)
+
 def syncfolder(mode,folder1,folder2):
-		if mode=="s":
-			sync (folder1,folder2,"sync")
-			os.system("clear")
+	if mode=="s":
+		sync (folder1,folder2,"sync")
+		os.system("clear")
 		elif mode==("u"):
 			sync (folder1,folder2,"update")
+
 def getfolders():
 	config.read("config.ini")
 	folders = config.sections()
@@ -95,6 +98,7 @@ def getfolders():
 		name = folder.split(None, 1)[1]
 		results.append(name)
 	return results
+
 def getopt(sect,opt,type='s'):
 	re=config.get(sect,opt,raw=True)
 	if isinstance(re,list)==True:
@@ -129,13 +133,13 @@ def getopt(sect,opt,type='s'):
 			re=False
 		else:
 			print("error, expression\n",re,"is not of a proper bool value")
-			print("error, expression\n",re,"is not of a proper bool value")
 			es.play_waite()
 			es.close()
 			exit
 	return re
+
 def idleloop():
-#init stuff
+	#init stuff
 	global donethings
 	s=sound.sound()
 	s.load('s/warn.wav')
@@ -157,6 +161,7 @@ def idleloop():
 				if getopt('idle_options','mute_wen_idle',type='b')==True:
 					volume.SetMute(1,None)
 		continue
+
 def getapps():
 	config.read("config.ini")
 	capps = config.sections()
@@ -166,10 +171,12 @@ def getapps():
 		name = capp.split(None, 1)[1]
 		results.append(name)
 	return results
+
 def toneplay():
 	vtf=getopt('system monitor options','volume_tone_frequency',type='i')
 	vtt=1000
 	winsound.Beep(vtf,vtt)
+
 def vmon():
 	vs=sound.sound()
 	if getopt('system monitor options','volume_sound_enabled',type='b')==True:
@@ -185,6 +192,7 @@ def vmon():
 				vs.play()
 		else:
 			continue
+
 def batrloop():
 	cs_sound=sound.sound()
 	ss_sound=sound.sound()
@@ -193,7 +201,7 @@ def batrloop():
 	battery=psutil.sensors_battery()
 	chargstat=battery[2]
 	bat=battery[0]
-#calback for watch
+	#calback for watch
 	def cstat(bla1,bla2,bla3):
 		if chargstat==True:
 			output.speak("battery charging started",True)
@@ -207,7 +215,6 @@ def batrloop():
 				pnot('computer stopped charging','your computer is not charging any more')
 	def bstat(bla1,bla2,bla3):
 		if bat==100 or bat==90 or bat ==80 or bat==70 or bat==60 or bat==50 or bat==40 or bat==30 or bat==20 or bat==10:
-
 			output.speak(str(bat)+"percent battery remaining",True)
 	watch(chargstat,callback=cstat)
 	watch(bat,callback=bstat)
@@ -216,6 +223,7 @@ def batrloop():
 		bat=battery[0]
 		chargstat=battery[2]
 		continue
+
 def volloop():
 	global donethings
 	while True:
@@ -229,18 +237,20 @@ def volloop():
 			if getopt('system monitor options','notify_prowl',type='b')==True:
 				pnot('computer not idle','some one is interacting with your computer')
 			continue
+
 def set_prowl_key():
-#prowl initialisation
+	#prowl initialisation
 	global pr
 	pr=pyprowl.Prowl(getopt('prowl options','key',type='s'))
 	try:
 		result =pr.verify_key()
 		print ("Prowl API key successfully verified")
 	except Exception as e:
-		print ("Error verifying Prowl API key:",e)
+		print (f"Error verifying Prowl API key:\n{e}")
 		es.play_wait()
 		es.close()
 		exit()
+
 def pnot(event: str,message: str):
 	try:
 		pr.notify(event,message,priority=getopt('prowl options','priority',type='i'),appName='estarter')
@@ -248,6 +258,7 @@ def pnot(event: str,message: str):
 	except Exception as  e:
 		print ("Error sending notification to Prowl:",e)
 		es.play()
+
 def usbloop():
 	pythoncom.CoInitialize()
 	device_connected_wql="SELECT * FROM __InstanceCreationEvent WITHIN 2 WHERE TargetInstance ISA \'Win32_USBHub\'"
@@ -270,4 +281,5 @@ def usbloop():
 		else:
 			if disconnected:
 				pnot("device disconnected","a device has been disconnected from your computer")
-main()
+
+if __name__=="__MAIN__": main()
