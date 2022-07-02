@@ -1,8 +1,8 @@
 configparser
 dirsync
-winsound
 psutil
 pycaw
 sound_lib
 accessible_output2
 watchpoints
+pyprowl
