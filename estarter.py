@@ -40,7 +40,7 @@ def main():
 	if __name__ == '__main__':
 		if getopt('system monitor options','notify_prowl',type='b')==True:
 			set_prowl_key()
-		if getopt('system monitor options','idle_closing',type='b')==True or getopt('idle_options','mute_wen_idle',type='b')==True or getopt('system monitor options','notify_prowl',type='b')==True:
+		if getopt('system monitor options','idle_closing',type='b')==True or getopt('idle_options','mute_wehn_idle',type='b')==True or getopt('system monitor options','notify_prowl',type='b')==True:
 			idle=Thread(target=idleloop)
 			kv=Thread(target=volloop)
 			kv.start()
@@ -158,7 +158,7 @@ def idleloop():
 				if getopt('system monitor options','idle_closing',type='b')==True:
 					closeapps()
 				donethings=True
-				if getopt('idle_options','mute_wen_idle',type='b')==True:
+				if getopt('idle_options','mute_when_idle',type='b')==True:
 					volume.SetMute(1,None)
 		continue
 
@@ -233,7 +233,7 @@ def volloop():
 		fidle =win32api.GetLastInputInfo()
 		if not lastfidle==fidle and donethings==True:
 			donethings=False
-			if getopt('idle_options','mute_wen_idle',type='b')==True:					volume.SetMute(0,None)
+			if getopt('idle_options','mute_when_idle',type='b')==True:					volume.SetMute(0,None)
 			if getopt('system monitor options','notify_prowl',type='b')==True:
 				pnot('computer not idle','some one is interacting with your computer')
 			continue
