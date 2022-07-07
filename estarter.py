@@ -116,7 +116,7 @@ def getopt(sect,opt,type='s'):
 			re=False
 		else:
 			print("error, expression\n",re,"is not of a proper bool value")
-			es.play_waite()
+			es.play_wait()
 			es.close()
 			exit
 	else:
