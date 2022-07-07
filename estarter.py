@@ -38,6 +38,11 @@ vr = volume.GetVolumeRange()
 def main():
 	#init stuff
 	if __name__ == '__main__':
+		if float(getcopt('version'))>=1.1:
+			pass
+		else:
+			print ('error, your config file is to old, version '+getcopt('version')+', is to old fore this version of estarter.')
+			exit()
 		if getopt('system monitor options','notify_prowl',type='b')==True:
 			set_prowl_key()
 		if getopt('system monitor options','idle_closing',type='b')==True or getopt('idle_options','mute_wen_idle',type='b')==True or getopt('system monitor options','notify_prowl',type='b')==True:
@@ -60,18 +65,18 @@ def closeapps():
 	capps=getapps()
 	config.read("config.ini")
 	for procloop in capps:
-		subprocess.Popen("taskkill.exe /im "+getopt("clapp "+procloop,"file"),shell=True,stdout=None)
+		subprocess.Popen("taskkill.exe /im "+getopt("clapp "+procloop,procloop+"@file"),shell=True,stdout=None)
 
 def back_folders(mode="s"):
 	folders=getfolders()
 	for foldloop in folders:
-		foldera=getopt("folder "+foldloop,"source")
+		foldera=getopt("folder "+foldloop,foldloop+"@source")
 		#print(foldera)
-		folderb=getopt("folder "+foldloop,"dest")
+		folderb=getopt("folder "+foldloop,foldloop+"@dest")
 		#print(folderb)
 		if mode=="s":
 			sp=Thread(target=syncfolder,args=("s",foldera,folderb))
-			sb.start
+			sp.start
 			while True:
 				if not sp.is_alive():
 					time.sleep(.5000)
@@ -86,7 +91,7 @@ def syncfolder(mode,folder1,folder2):
 	if mode=="s":
 		sync (folder1,folder2,"sync")
 		os.system("clear")
-		elif mode==("u"):
+		if mode=="u":
 			sync (folder1,folder2,"update")
 
 def getfolders():
@@ -137,6 +142,22 @@ def getopt(sect,opt,type='s'):
 			es.close()
 			exit
 	return re
+
+def getcopt(option):
+	cfg_object=open('config.ini','r')
+	cfg=cfg_object.readlines()
+	cfg_object.close()
+	opt=''
+	for cl in cfg:
+		cll=cl.split(' ')
+		if cll[0]==';!'+option:
+			cll=cl.split(' ')
+			clll=cll[1].split('\n')
+			opt=clll[	0]
+			break
+		else:
+			continue
+	return opt
 
 def idleloop():
 	#init stuff
@@ -282,4 +303,4 @@ def usbloop():
 			if disconnected:
 				pnot("device disconnected","a device has been disconnected from your computer")
 
-if __name__=="__MAIN__": main()
+if __name__=="__main__": main()
