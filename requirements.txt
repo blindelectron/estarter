@@ -6,3 +6,4 @@ sound_lib
 accessible_output2
 watchpoints
 pyprowl
+wmi
