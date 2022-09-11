@@ -20,6 +20,7 @@ from watchpoints import watch
 import sys
 import pythoncom
 import wmi
+import os
 #config parser initialisation
 config = configparser.ConfigParser()
 config.read("config.ini")
@@ -42,6 +43,7 @@ def main():
 			pass
 		else:
 			print ('error, your config file is to old, version '+getcopt('version')+', is to old fore this version of estarter.')
+			es.play_wait()
 			exit()
 		if getopt('system monitor options','notify_prowl',type='b')==True:
 			set_prowl_key()
@@ -60,6 +62,9 @@ def main():
 	if getopt('system monitor options','usb_monitor',type='b')==True:
 		uthread=Thread(target=usbloop)
 		uthread.start()
+	if getopt('git_options','gitupdater',type='b'):
+		gthread=Thread(target=repoloop)
+		gthread.start()
 
 def closeapps():
 	capps=getapps()
@@ -89,8 +94,10 @@ def back_folders(mode="s"):
 
 def syncfolder(mode,folder1,folder2):
 	if mode=="s":
+		saved_stdout, saved_stderr = sys.stdout, sys.stderr
+		sys.stdout = sys.stderr = open(os.devnull, "w")
 		sync (folder1,folder2,"sync")
-		os.system("clear")
+		sys.stdout, sys.stderr = saved_stdout, saved_stderr
 		if mode=="u":
 			sync (folder1,folder2,"update")
 
@@ -302,5 +309,48 @@ def usbloop():
 		else:
 			if disconnected:
 				pnot("device disconnected","a device has been disconnected from your computer")
+
+def repoloop():
+	#a function to go thrue a directory in the config file and update all git repos contained with in.
+	config.read("config.ini")
+	gitdirs = config.sections()
+	gitdirs = [g for g in gitdirs if g.lower().startswith("gitdir ")]
+	results = []
+	for gitd in gitdirs:
+		name=gitd.split(' ',1)[1]
+#		print(name)
+		results.append(name)
+	for re in results:
+		gitdict={re+"_thread":Thread(target=gitloop,args=(re))}
+		gitloop(re)
+		print(gitdict)
+#		cthread=gitdict[re+"_thread"]
+#		if not cthread.is_alive():
+#			cthread.start()
+#		else:
+#			continue
+
+
+def gitloop(r: str):
+	gu=sound.sound()
+	gu.load("s/oneup.wav")
+	au=sound.sound()
+	au.load("s/allup.wav")
+	gitrepos=os.listdir(getopt("gitdir "+r,r+"@path",type='s'))
+	ps=os.environ['systemroot']+"\\system32\\WindowsPowerShell\\v1.0\\powershell.exe"
+	while True:
+		time.sleep(getopt('gitdir '+r,r+'@update_interval',type='i')*60)
+		for gr in gitrepos:
+			subprocess.call(ps+" cd \'"+getopt("gitdir "+r,r+"@path",type='s')+"\\"+gr+"\';git pull",shell=True,stdout=None)
+			print(ps+" cd \""+getopt("gitdir "+r,r+"@path",type='s')+"\\"+gr+"\"&&git pull")
+			if getopt('git_options','sounds',type='b'):
+				gu.play()
+			if getopt('git_options','speech',type='b'):
+				output.speak(gr+" repo updated for "+r+".")
+		if getopt('git_options','sounds',type='b'):
+			au.play()
+		if getopt('git_options','speech',type='b'):
+			output.speak("all repos updated for "+r+".")
+			continue
 
 if __name__=="__main__": main()
