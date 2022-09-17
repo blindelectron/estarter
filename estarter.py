@@ -35,7 +35,6 @@ pr=""
 devices = AudioUtilities.GetSpeakers()
 interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
 volume = cast(interface, POINTER(IAudioEndpointVolume))
-vr = volume.GetVolumeRange()
 def main():
 	#init stuff
 	if __name__ == '__main__':
@@ -85,7 +84,7 @@ def back_folders(mode="s"):
 			while True:
 				if not sp.is_alive():
 					time.sleep(.5000)
-					sp=Thread(target=syncfolder("s",foldera,folderb,))
+					sp=Thread(target=syncfolder,args=("s",foldera,folderb,))
 					sp.start()
 				else:
 					continue
@@ -206,20 +205,23 @@ def toneplay():
 	winsound.Beep(vtf,vtt)
 
 def vmon():
+	vl =volume.GetMasterVolumeLevel()
 	vs=sound.sound()
 	if getopt('system monitor options','volume_sound_enabled',type='b')==True:
 		vs.load("s/volume.wav")
+#	callback for watch
+	def volwatch(a,ab,abc):
+		if getopt('system monitor options','volume_tone_enabled',type='b')==True:
+			toneplay()
+		if getopt('system monitor options','volume_sound_enabled',type='b')==True:
+			vs.play()
+	watch(vl,callback=volwatch)
 	while True:
 		vl =volume.GetMasterVolumeLevel()
-		ovl=vl
-		vl = volume.GetMasterVolumeLevel()
-		if not ovl==vl:
-			if getopt('system monitor options','volume_tone_enabled',type='b')==True:
-				toneplay()
-			if getopt('system monitor options','volume_sound_enabled',type='b')==True:
-				vs.play()
-		else:
-			continue
+		time.sleep(0.5)
+		continue
+
+
 
 def batrloop():
 	cs_sound=sound.sound()
@@ -247,6 +249,7 @@ def batrloop():
 	watch(chargstat,callback=cstat)
 	watch(bat,callback=bstat)
 	while True:
+		time.sleep(0.5)
 		battery=psutil.sensors_battery()
 		bat=battery[0]
 		chargstat=battery[2]
@@ -281,7 +284,7 @@ def set_prowl_key():
 
 def pnot(event: str,message: str):
 	try:
-		pr.notify(event,message,priority=getopt('prowl options','priority',type='i'),appName='estarter')
+		pr.notify(event,message,priority=getopt('prowl options','priority',type='i'),appName='EStarter')
 		print("notification sent to prowl")
 	except Exception as  e:
 		print ("Error sending notification to Prowl:",e)
@@ -290,11 +293,16 @@ def pnot(event: str,message: str):
 def usbloop():
 	pythoncom.CoInitialize()
 	device_connected_wql="SELECT * FROM __InstanceCreationEvent WITHIN 2 WHERE TargetInstance ISA \'Win32_USBHub\'"
+	csound=sound.sound()
+	dsound=sound.sound()
+	csound.load("s/usbadded.wav")
+	dsound.load("s/usbremoved.wav")
 	device_disconnected_wql="SELECT * FROM __InstanceDeletionEvent WITHIN 2 WHERE TargetInstance ISA \'Win32_USBHub\'"
 	c=wmi.WMI ()
 	connected_watcher = c.watch_for(raw_wql=device_connected_wql)
 	disconnected_watcher = c.watch_for(raw_wql=device_disconnected_wql)
 	while 1:
+		time.sleep(0.5)
 		try:
 			connected = connected_watcher(timeout_ms=10)
 		except wmi.x_wmi_timed_out:
@@ -302,6 +310,8 @@ def usbloop():
 		else:
 			if connected:
 				pnot("device connected","a device has been connected to your computer")
+				if getopt('usb_monitor_options','sounds',type='b'): csound.play()
+				if getopt('usb_monitor_options','speech',type='b'): output.speak("device connected")
 		try:
 			disconnected = disconnected_watcher(timeout_ms=10)
 		except wmi.x_wmi_timed_out:
@@ -309,6 +319,8 @@ def usbloop():
 		else:
 			if disconnected:
 				pnot("device disconnected","a device has been disconnected from your computer")
+				if getopt('usb_monitor_options','sounds',type='b'): dsound.play()
+				if getopt('usb_monitor_options','speech',type='b'): output.speak("device disconnected")
 
 def repoloop():
 	#a function to go thrue a directory in the config file and update all git repos contained with in.
@@ -323,12 +335,11 @@ def repoloop():
 	for re in results:
 		gitdict={re+"_thread":Thread(target=gitloop,args=(re))}
 		gitloop(re)
-		print(gitdict)
-#		cthread=gitdict[re+"_thread"]
-#		if not cthread.is_alive():
-#			cthread.start()
-#		else:
-#			continue
+		cthread=gitdict[re+"_thread"]
+		if not cthread.is_alive():
+			cthread.start()
+		else:
+			continue
 
 
 def gitloop(r: str):
@@ -342,7 +353,6 @@ def gitloop(r: str):
 		time.sleep(getopt('gitdir '+r,r+'@update_interval',type='i')*60)
 		for gr in gitrepos:
 			subprocess.call(ps+" cd \'"+getopt("gitdir "+r,r+"@path",type='s')+"\\"+gr+"\';git pull",shell=True,stdout=None)
-			print(ps+" cd \""+getopt("gitdir "+r,r+"@path",type='s')+"\\"+gr+"\"&&git pull")
 			if getopt('git_options','sounds',type='b'):
 				gu.play()
 			if getopt('git_options','speech',type='b'):
