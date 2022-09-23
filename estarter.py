@@ -2,9 +2,8 @@
 ##imports
 import os
 import time
-import output
 import win32api
-import sound
+from core import sound,idle,output
 import subprocess
 import configparser
 from dirsync import sync
@@ -48,8 +47,8 @@ def main():
 			set_prowl_key()
 		if getopt('system monitor options','idle_closing',type='b')==True or getopt('idle_options','mute_wen_idle',type='b')==True or getopt('system monitor options','notify_prowl',type='b')==True:
 			idle=Thread(target=idleloop)
-			kv=Thread(target=volloop)
-			kv.start()
+#			kv=Thread(target=volloop)
+#			kv.start()
 			idle.start()
 		fsync=Thread(target=back_folders,args="s")
 		volmon=Thread(target=vmon)
@@ -172,22 +171,26 @@ def idleloop():
 	s.load('s/warn.wav')
 	afktime=getopt('idle_options','afk_time',type='i')
 	warntime=getopt('idle_options','warn_time',type='i')
+	soundplayed=False
 	while True:
-		fidle=win32api.GetLastInputInfo()
-		lastfidle=fidle
-		time.sleep(afktime)
-		fidle=win32api.GetLastInputInfo()
-		if lastfidle==fidle and donethings==False:
-			s.play_wait()
-			time.sleep(warntime)
-			fidle=win32api.GetLastInputInfo()
-			if lastfidle==fidle:
-				if getopt('system monitor options','idle_closing',type='b')==True:
-					closeapps()
+		time.sleep(0.5)
+		if idle.get_idle_duration()>=afktime:
+			if not soundplayed:
+				s.play_wait()
+				soundplayed=True
+			if idle.get_idle_duration()>=afktime+warntime and donethings==False:
+				if getopt('system monitor options','idle_closing',type='b')==True: closeapps()
+				if getopt('idle_options','mute_wen_idle',type='b')==True: volume.SetMute(1,None)
 				donethings=True
-				if getopt('idle_options','mute_wen_idle',type='b')==True:
-					volume.SetMute(1,None)
-		continue
+				continue
+			elif idle.get_idle_duration()<afktime and soundplayed==True:
+				if getopt('system monitor options','notify_prowl',type='b')==True and donethings==True: pnot('computer not idle','some one is interacting with your computer')
+				donethings=False
+				soundplayed=False
+				if getopt('idle_options','mute_wen_idle',type='b')==True: volume.SetMute(0,None)
+				continue
+			else: continue
+		else: continue
 
 def getapps():
 	config.read("config.ini")
