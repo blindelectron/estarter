@@ -4,6 +4,7 @@ import os
 import time
 import win32api
 from core import sound,idle,output
+from core import file_manager as fm
 import subprocess
 import configparser
 from dirsync import sync
@@ -22,7 +23,12 @@ import wmi
 import os
 #config parser initialisation
 config = configparser.ConfigParser()
-config.read("config.ini")
+if fm.file_exists(fm.get_working_directory()+"\\np.cf"):
+	if not fm.directory_exists(os.environ['appdata']+"\\blindelectron"): fm.directory_create(os.environ['appdata']+"\\blindelectron")
+	if not fm.file_exists(os.environ['appdata']+"\\blindelectron\\estarter.ini"): fm.file_copy(fm.get_working_directory()+"\\config_default.ini",os.environ['appdata']+"\\blindelectron\\estarter.ini",True)
+	config.read(os.environ['appdata']+"\\blindelectron\\estarter.ini")
+else:
+	config.read("config.ini")
 #global values
 folders=[]
 capps=[]
@@ -66,7 +72,6 @@ def main():
 
 def closeapps():
 	capps=getapps()
-	config.read("config.ini")
 	for procloop in capps:
 		subprocess.Popen("taskkill.exe /im "+getopt("clapp "+procloop,procloop+"@file"),shell=True,stdout=None)
 
@@ -100,7 +105,6 @@ def syncfolder(mode,folder1,folder2):
 			sync (folder1,folder2,"update")
 
 def getfolders():
-	config.read("config.ini")
 	folders = config.sections()
 	folders = [f for f in folders if f.lower().startswith("folder ")]
 	results = []
@@ -189,7 +193,6 @@ def idleloop():
 
 
 def getapps():
-	config.read("config.ini")
 	capps = config.sections()
 	capps = [c for c in capps if c.lower().startswith("clapp ")]
 	results = []
@@ -353,7 +356,6 @@ def usbloop():
 
 def repoloop():
 	#a function to go thrue a directory in the config file and update all git repos contained with in.
-	config.read("config.ini")
 	gitdirs = config.sections()
 	gitdirs = [g for g in gitdirs if g.lower().startswith("gitdir ")]
 	results = []
