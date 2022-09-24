@@ -1,3 +1,5 @@
 python -m nuitka --standalone estarter.py
-cp -R s estarter.dist/s
-cp config_default.ini estarter.dist/config_default.ini
+md estarter.dist\s
+copy  s estarter.dist\s
+copy config_default.ini estarter.dist\config_default.ini
+copy null estarter.dist/np.cf
