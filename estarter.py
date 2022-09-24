@@ -36,6 +36,7 @@ interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
 volume = cast(interface, POINTER(IAudioEndpointVolume))
 def main():
 #init stuff
+#	usb=usbctl.usbctl()
 	if float(getcopt('version'))>=1.1:
 		pass
 	else:
@@ -55,8 +56,10 @@ def main():
 		bthread=Thread(target=batrloop)
 		bthread.start()
 	if getopt('system monitor options','usb_monitor',type='b')==True:
-		uthread=Thread(target=usbloop)
+		uthread=Thread(target=monitor_disconnected)
+		utwothread=Thread(target=monitor_connected)
 		uthread.start()
+		utwothread.start()
 	if getopt('git_options','gitupdater',type='b'):
 		gthread=Thread(target=repoloop)
 		gthread.start()
@@ -285,6 +288,36 @@ def pnot(event: str,message: str):
 	except Exception as  e:
 		print ("Error sending notification to Prowl:",e)
 		es.play()
+
+
+def monitor_connected():
+	pythoncom.CoInitialize()
+	cone=wmi.WMI ()
+	device_connected_wql="SELECT * FROM __InstanceCreationEvent WITHIN 2 WHERE TargetInstance ISA \'Win32_USBHub\'"
+	csound=sound.sound()
+	csound.load("s/usbadded.wav")
+	connected_watcher = cone.watch_for(raw_wql=device_connected_wql)
+	while True:
+		time.sleep(0.5)
+		connected = connected_watcher()
+		if connected:
+			pnot("device connected","a device has been connected to your computer")
+			if getopt('usb_monitor_options','sounds',type='b'): csound.play()
+			if getopt('usb_monitor_options','speech',type='b'): output.speak("device connected")
+
+def monitor_disconnected():
+	pythoncom.CoInitialize()
+	ctwo=wmi.WMI ()
+	dsound=sound.sound()
+	dsound.load("s/usbremoved.wav")
+	device_disconnected_wql="SELECT * FROM __InstanceDeletionEvent WITHIN 2 WHERE TargetInstance ISA \'Win32_USBHub\'"
+	disconnected_watcher = ctwo.watch_for(raw_wql=device_disconnected_wql)
+	while True:
+		disconnected = disconnected_watcher()
+		if disconnected:
+			pnot("device disconnected","a device has been disconnected from your computer")
+			if getopt('usb_monitor_options','sounds',type='b'): dsound.play()
+			if getopt('usb_monitor_options','speech',type='b'): output.speak("device disconnected")
 
 def usbloop():
 	pythoncom.CoInitialize()
