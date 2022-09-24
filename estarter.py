@@ -1,5 +1,5 @@
 
-##imports
+#imports
 import os
 import time
 import win32api
@@ -35,25 +35,22 @@ devices = AudioUtilities.GetSpeakers()
 interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
 volume = cast(interface, POINTER(IAudioEndpointVolume))
 def main():
-	#init stuff
-	if __name__ == '__main__':
-		if float(getcopt('version'))>=1.1:
-			pass
-		else:
-			print ('error, your config file is to old, version '+getcopt('version')+', is to old fore this version of estarter.')
-			es.play_wait()
-			exit()
-		if getopt('system monitor options','notify_prowl',type='b')==True:
-			set_prowl_key()
-		if getopt('system monitor options','idle_closing',type='b')==True or getopt('idle_options','mute_wen_idle',type='b')==True or getopt('system monitor options','notify_prowl',type='b')==True:
-			idle=Thread(target=idleloop)
-#			kv=Thread(target=volloop)
-#			kv.start()
-			idle.start()
-		fsync=Thread(target=back_folders,args="s")
-		volmon=Thread(target=vmon)
-		fsync.start()
-		volmon.start()
+#init stuff
+	if float(getcopt('version'))>=1.1:
+		pass
+	else:
+		print ('error, your config file is to old, version '+getcopt('version')+', is to old fore this version of estarter.')
+		es.play_wait()
+		exit()
+	if getopt('system monitor options','notify_prowl',type='b')==True:
+		set_prowl_key()
+	if getopt('system monitor options','idle_closing',type='b')==True or getopt('idle_options','mute_wen_idle',type='b')==True or getopt('system monitor options','notify_prowl',type='b')==True:
+		idle=Thread(target=idleloop)
+		idle.start()
+	fsync=Thread(target=back_folders,args="s")
+	volmon=Thread(target=vmon)
+	fsync.start()
+	volmon.start()
 	if getopt('system monitor options','battery_announce',type='b')==True:
 		bthread=Thread(target=batrloop)
 		bthread.start()
@@ -74,9 +71,9 @@ def back_folders(mode="s"):
 	folders=getfolders()
 	for foldloop in folders:
 		foldera=getopt("folder "+foldloop,foldloop+"@source")
-		#print(foldera)
+#		print(foldera)
 		folderb=getopt("folder "+foldloop,foldloop+"@dest")
-		#print(folderb)
+#		print(folderb)
 		if mode=="s":
 			sp=Thread(target=syncfolder,args=("s",foldera,folderb))
 			sp.start
@@ -85,8 +82,8 @@ def back_folders(mode="s"):
 					time.sleep(.5000)
 					sp=Thread(target=syncfolder,args=("s",foldera,folderb,))
 					sp.start()
-				else:
-					continue
+			else:
+				continue
 		elif mode=="u":
 			syncfolder("u",foldera,folderb,)
 
@@ -173,24 +170,20 @@ def idleloop():
 	warntime=getopt('idle_options','warn_time',type='i')
 	soundplayed=False
 	while True:
-		time.sleep(0.5)
 		if idle.get_idle_duration()>=afktime:
 			if not soundplayed:
-				s.play_wait()
+				s.play()
 				soundplayed=True
 			if idle.get_idle_duration()>=afktime+warntime and donethings==False:
 				if getopt('system monitor options','idle_closing',type='b')==True: closeapps()
 				if getopt('idle_options','mute_wen_idle',type='b')==True: volume.SetMute(1,None)
 				donethings=True
-				continue
 			elif idle.get_idle_duration()<afktime and soundplayed==True:
 				if getopt('system monitor options','notify_prowl',type='b')==True and donethings==True: pnot('computer not idle','some one is interacting with your computer')
 				donethings=False
 				soundplayed=False
 				if getopt('idle_options','mute_wen_idle',type='b')==True: volume.SetMute(0,None)
-				continue
-			else: continue
-		else: continue
+
 
 def getapps():
 	config.read("config.ini")
@@ -212,7 +205,7 @@ def vmon():
 	vs=sound.sound()
 	if getopt('system monitor options','volume_sound_enabled',type='b')==True:
 		vs.load("s/volume.wav")
-#	callback for watch
+#		callback for watch
 	def volwatch(a,ab,abc):
 		if getopt('system monitor options','volume_tone_enabled',type='b')==True:
 			toneplay()
