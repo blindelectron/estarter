@@ -362,19 +362,20 @@ def repoloop():
 	for gitd in gitdirs:
 		name=gitd.split(' ',1)[1]
 #		print(name)
-		results.append(name)
+		results.append(str(name))
 	for re in results:
-		gitdict={re+"_thread":Thread(target=gitloop,args=(re))}
-		gitloop(re)
-		cthread=gitdict[re+"_thread"]
+		gitdict={re+"thread":Thread(target=gitloop,args=(re,),)}
+#		gitloop(re)
+		cthread=gitdict[re+"thread"]
 		if not cthread.is_alive():
 			cthread.start()
 		else:
 			continue
 
 
-def gitloop(r: str):
+def gitloop(r,*args,**kwargs):
 	gu=sound.sound()
+#	print(r+" initialized")
 	gu.load("s/oneup.wav")
 	au=sound.sound()
 	au.load("s/allup.wav")
