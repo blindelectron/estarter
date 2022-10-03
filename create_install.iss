@@ -39,8 +39,8 @@ Name: "quicklaunchicon"; Description: "{cm:CreateQuickLaunchIcon}"; GroupDescrip
 [Files]
 Source: "{#SourcePath}\estarter.dist\estarter.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#SourcePath}\estarter.dist\accessible_output2\*"; DestDir: "{app}\accessible_output2"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "{#SourcePath}\estarter.dist\psutil\*"; DestDir: "{app}\accessible_output2"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "{#SourcePath}\estarter.dist\numpy\*"; DestDir: "{app}\accessible_output2"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#SourcePath}\estarter.dist\psutil\*"; DestDir: "{app}\psutil"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#SourcePath}\estarter.dist\numpy\*"; DestDir: "{app}\numpy"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#SourcePath}\estarter.dist\certifi\*"; DestDir: "{app}\certifi"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#SourcePath}\estarter.dist\s\*"; DestDir: "{app}\s"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#SourcePath}\estarter.dist\sound_lib\*"; DestDir: "{app}\sound_lib"; Flags: ignoreversion recursesubdirs createallsubdirs
