@@ -7,3 +7,4 @@ accessible_output2
 watchpoints
 pyprowl
 wmi
+requests
