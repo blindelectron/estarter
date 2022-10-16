@@ -23,12 +23,6 @@ import wmi
 import os
 #config parser initialisation
 config = configparser.ConfigParser()
-if fm.file_exists(fm.get_working_directory()+"\\np.cf"):
-	if not fm.directory_exists(os.environ['appdata']+"\\blindelectron"): fm.directory_create(os.environ['appdata']+"\\blindelectron")
-	if not fm.file_exists(os.environ['appdata']+"\\blindelectron\\estarter.ini"): fm.file_copy(fm.get_working_directory()+"\\config_default.ini",os.environ['appdata']+"\\blindelectron\\estarter.ini",True)
-	config.read(os.environ['appdata']+"\\blindelectron\\estarter.ini")
-else:
-	config.read("config.ini")
 #global values
 folders=[]
 capps=[]
@@ -43,6 +37,12 @@ volume = cast(interface, POINTER(IAudioEndpointVolume))
 def main():
 #init stuff
 #	usb=usbctl.usbctl()
+	if fm.file_exists(fm.get_working_directory()+"\\np.cf"):
+		if not fm.directory_exists(os.environ['appdata']+"\\blindelectron"): fm.directory_create(os.environ['appdata']+"\\blindelectron")
+		if not fm.file_exists(os.environ['appdata']+"\\blindelectron\\estarter.ini"): fm.file_copy(fm.get_working_directory()+"\\config_default.ini",os.environ['appdata']+"\\blindelectron\\estarter.ini",True)
+		config.read(os.environ['appdata']+"\\blindelectron\\estarter.ini")
+	else:
+		config.read("config.ini")
 	if float(getcopt('version'))>=1.1:
 		pass
 	else:
