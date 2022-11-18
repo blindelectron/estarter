@@ -16,7 +16,6 @@ from ctypes import cast, POINTER
 from comtypes import CLSCTX_ALL
 from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 import pyprowl
-from watchpoints import watch
 import sys
 import pythoncom
 import wmi
@@ -211,16 +210,16 @@ def vmon():
 	vs=sound.sound()
 	if getopt('system monitor options','volume_sound_enabled',type='b')==True:
 		vs.load("s/volume.wav")
-#		callback for watch
-	def volwatch(a,ab,abc):
-		if getopt('system monitor options','volume_tone_enabled',type='b')==True:
-			toneplay()
-		if getopt('system monitor options','volume_sound_enabled',type='b')==True:
-			vs.play()
-	watch(vl,callback=volwatch)
 	while True:
 		vl =volume.GetMasterVolumeLevel()
+		ovl=vl
 		time.sleep(0.5)
+		vl =volume.GetMasterVolumeLevel()
+		if not ovl==vl:
+			if getopt('system monitor options','volume_tone_enabled',type='b')==True:
+				toneplay()
+			if getopt('system monitor options','volume_sound_enabled',type='b')==True:
+				vs.play()
 		continue
 
 
@@ -233,29 +232,32 @@ def batrloop():
 	battery=psutil.sensors_battery()
 	chargstat=battery[2]
 	bat=battery[0]
-	#calback for watch
-	def cstat(bla1,bla2,bla3):
-		if chargstat==True:
-			output.speak("battery charging started",True)
-			cs_sound.play()
-			if getopt('system monitor options','notify_prowl',type='b')==True:
-				pnot('computer started charging','your computer is now charging')
-		if chargstat==False:
-			output.speak("battery charging stopped",True)
-			ss_sound.play()
-			if getopt('system monitor options','notify_prowl',type='b')==True:
-				pnot('computer stopped charging','your computer is not charging any more')
-	def bstat(bla1,bla2,bla3):
-		if bat==100 or bat==90 or bat ==80 or bat==70 or bat==60 or bat==50 or bat==40 or bat==30 or bat==20 or bat==10:
-			output.speak(str(bat)+"percent battery remaining",True)
-	watch(chargstat,callback=cstat)
-	watch(bat,callback=bstat)
+
 	while True:
+		battery=psutil.sensors_battery()
+		bat=battery[0]
+		chargstat=battery[2]
+		obat=bat
+		ochargstat=chargstat
 		time.sleep(0.5)
 		battery=psutil.sensors_battery()
 		bat=battery[0]
 		chargstat=battery[2]
-		continue
+		if not ochargstat==chargstat:
+			if chargstat==True:
+				output.speak("battery charging started",True)
+				cs_sound.play()
+				if getopt('system monitor options','notify_prowl',type='b')==True:
+					pnot('computer started charging','your computer is now charging')
+			if chargstat==False:
+				output.speak("battery charging stopped",True)
+				ss_sound.play()
+				if getopt('system monitor options','notify_prowl',type='b')==True:
+					pnot('computer stopped charging','your computer is not charging') 
+				continue
+		if not obat==bat:
+			if bat==100 or bat==90 or bat ==80 or bat==70 or bat==60 or bat==50 or bat==40 or bat==30 or bat==20 or bat==10:
+				output.speak(str(bat)+"percent battery remaining",True)
 
 def volloop():
 	global donethings
@@ -291,7 +293,6 @@ def pnot(event: str,message: str):
 	except Exception as  e:
 		print ("Error sending notification to Prowl:",e)
 		es.play()
-
 
 def monitor_connected():
 	pythoncom.CoInitialize()
